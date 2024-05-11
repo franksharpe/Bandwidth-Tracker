@@ -17,13 +17,13 @@ def get_net_speed():
 def update_gui():
     sent, recv = get_net_speed()
     
-    upload_speed_label.config(text= sent)
-    download_speed_label.config(text= recv)
+    upload_speed_label.config(text= f"Upload: {sent:.2f} KB/s")
+    download_speed_label.config(text= f"Download: {recv:.2f} KB/s")
     
-root.after(1000, update_gui)
+    root.after(1000, update_gui)
 
-root = tk.TK()
-root.title("Bandwith monitior")
+root = tk.Tk()  
+root.title("Bandwidth monitor")
 
 upload_speed_label = tk.Label(root,text="Upload: 0 KB/s")
 upload_speed_label.pack()
@@ -32,3 +32,5 @@ download_speed_label = tk.Label(root,text="Download: 0 KB/s")
 download_speed_label.pack()
 
 update_gui()
+
+root.mainloop()  
