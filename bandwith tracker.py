@@ -1,4 +1,4 @@
-#bandwith traceker
+#bandwith tracker
 
 #things to add
 
@@ -10,23 +10,15 @@
 # connect to api such as Have I Been Pwned API , Shodan API
 
 
-
-
-
-
-
-
-
-
-
 #libraries
 import tkinter as tk
 import psutil
 import time
 import shodan
+import ipaddress
 
 # Shodan API Key
-SHODAN_API_KEY = "WTc1A44UYeTSPWKlsUc7capT1KyxnXwg"
+SHODAN_API_KEY = "YOUR_SHODAN_API_KEY"
 
 # Initialize Shodan API
 api = shodan.Shodan(SHODAN_API_KEY)
@@ -34,7 +26,7 @@ api = shodan.Shodan(SHODAN_API_KEY)
 # Function to create a Shodan network alert
 def create_shodan_alert(network_range):
     try:
-        alert = api.create_alert(name="My Production Network", filters={'ip': network_range})
+        alert = api.create_alert(name="My Production Network", ip_range=network_range)
         print("Shodan alert created successfully!")
         return alert['id']
     except Exception as e:
@@ -52,6 +44,24 @@ def enable_malware_trigger(alert_id):
                 break
     except Exception as e:
         print(f"Error enabling malware trigger: {str(e)}")
+
+# Function to get the network address and subnet mask
+def get_network_info():
+    # Get network interface information
+    interfaces = psutil.net_if_addrs()
+    
+    # Find the first non-loopback interface
+    for interface in interfaces:
+        if interface != 'lo':
+            for addr in interfaces[interface]:
+                if addr.family == psutil.AddressFamily.AF_INET:
+                    return addr.address, addr.netmask
+    return None, None
+
+# Function to calculate IP address range based on network address and subnet mask
+def calculate_ip_range(network_address, subnet_mask):
+    network = ipaddress.ip_network((network_address, subnet_mask), strict=False)
+    return str(network.network_address) + '/' + str(network.prefixlen)
 
 # Get the speeds
 def get_net_speed():
@@ -93,11 +103,19 @@ download_speed_label.pack()
 # Run update GUI
 update_gui()
 
-# Create Shodan alert
-alert_id = create_shodan_alert("198.20.0.0/16")
-if alert_id:
-    # Enable malware trigger for the Shodan alert
-    enable_malware_trigger(alert_id)
+# Get network information
+network_address, subnet_mask = get_network_info()
+
+# Calculate IP address range
+if network_address and subnet_mask:
+    network_range = calculate_ip_range(network_address, subnet_mask)
+    print("Network Range:", network_range)
+    
+    # Create Shodan alert
+    alert_id = create_shodan_alert(network_range)
+    if alert_id:
+        # Enable malware trigger for the Shodan alert
+        enable_malware_trigger(alert_id)
 
 # Run the GUI
 root.mainloop()
