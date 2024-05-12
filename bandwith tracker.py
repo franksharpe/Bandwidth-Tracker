@@ -1,21 +1,10 @@
-#bandwith tracker
-
-#things to add
-
-#units customisation
-#graphs
-#logging data
-#system info
-#notifcations
-# connect to api such as Have I Been Pwned API , Shodan API
-
-
-#libraries
+# Libraries
 import tkinter as tk
 import psutil
 import time
 import shodan
 import ipaddress
+import requests
 
 # Shodan API Key
 SHODAN_API_KEY = "YOUR_SHODAN_API_KEY"
@@ -54,9 +43,15 @@ def get_network_info():
     for interface in interfaces:
         if interface != 'lo':
             for addr in interfaces[interface]:
-                if addr.family == psutil.AddressFamily.AF_INET:
+                # Print the attributes of addr to see what's available
+                print(addr)
+                # Check if the family attribute exists and its value
+                if hasattr(addr, 'family') and addr.family == getattr(psutil, 'AF_INET', None):
                     return addr.address, addr.netmask
     return None, None
+
+# Test the function
+get_network_info()
 
 # Function to calculate IP address range based on network address and subnet mask
 def calculate_ip_range(network_address, subnet_mask):
@@ -88,9 +83,27 @@ def update_gui():
     # Update GUI after time
     root.after(1000, update_gui)
 
+# Function to check email for breaches
+def check_email_for_breaches(email):
+    url = f"https://monitor.firefox.com/api/v1/breaches/{email}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+
+        breaches = response.json()
+        if breaches:
+            print(f"The email '{email}' has been involved in the following breaches:")
+            for breach in breaches:
+                print(f"Breach: {breach['breachId']} - {breach['site']}")
+        else:
+            print(f"The email '{email}' has not been involved in any known breaches.")
+    except requests.exceptions.RequestException as e:
+        print("Error:", e)
+
 # GUI
 root = tk.Tk()  
 root.title("Bandwidth monitor")
+root.minsize(300, 300)
 
 # Upload label 
 upload_speed_label = tk.Label(root, text="Upload: 0 KB/s")
@@ -99,6 +112,15 @@ upload_speed_label.pack()
 # Download label
 download_speed_label = tk.Label(root, text="Download: 0 KB/s")
 download_speed_label.pack()
+
+# Entry for email to check
+email_to_check_entry = tk.Entry(root, width=50)  # Adjust the width as needed
+email_to_check_entry.pack()
+
+
+# Button to trigger breach check
+breach_check_button = tk.Button(root, text="Check Breaches", command=lambda: check_email_for_breaches(email_to_check_entry.get()))
+breach_check_button.pack()
 
 # Run update GUI
 update_gui()
