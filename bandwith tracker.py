@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import ping3
 
-
+# Function to measure ping to a given host
 def measure_ping(host):
     try:
         # Perform ping and get the round-trip time (in seconds)
@@ -19,6 +19,7 @@ def measure_ping(host):
         print("Error:", e)
         return None
 
+# Function to update the ping label with the latest ping result
 def update_ping_label():
     ping_result = measure_ping("www.google.com")  
     if ping_result is not None:
@@ -29,7 +30,7 @@ def update_ping_label():
     # Schedule the next update after 1 second (1000 milliseconds)
     root.after(1000, update_ping_label)
     
-
+# Function to get the network speed (upload and download) in KB/s
 def get_net_speed():
     old_stat = psutil.net_io_counters()
     time.sleep(1)
@@ -44,10 +45,7 @@ def get_net_speed():
     
     return bytes_sent, bytes_recv
 
-
-
-
-#update the gui
+# Function to update the GUI with the latest network speed values
 def update_gui():
     # Get the latest values from the graph
     if upload_speeds and download_speeds:
@@ -57,63 +55,50 @@ def update_gui():
         print("Latest upload speed:", sent)
         print("Latest download speed:", recv)
     
-        #upload label config
+        # Update upload speed label
         upload_speed_label.config(text=f"Upload: {sent:.2f} KB/s")
     
-        #download label config
+        # Update download speed label
         download_speed_label.config(text=f"Download: {recv:.2f} KB/s")
 
-    #update gui after time
+    # Schedule the next update after 1 second (1000 milliseconds)
     root.after(1000, update_gui)
 
-
-   
-   
-   
-    
-# Function to update the plot
+# Function to update the plot with the latest network speed data
 def update_plot(frame):
     sent, recv = get_net_speed()
     upload_speeds.append(sent)
     download_speeds.append(recv)
     
-    ax.clear()
-    ax.plot(upload_speeds, label='Upload')
-    ax.plot(download_speeds, label='Download')
-    ax.legend()
-    ax.set_title('Real-time Bandwidth Monitor')
-    ax.set_xlabel('Time')
-    ax.set_ylabel('Speed (KB/s)')
+    ax.clear()  # Clear the previous plot
+    ax.plot(upload_speeds, label='Upload')  # Plot upload speeds
+    ax.plot(download_speeds, label='Download')  # Plot download speeds
+    ax.legend()  # Add legend to the plot
+    ax.set_title('Real-time Bandwidth Monitor')  # Set title of the plot
+    ax.set_xlabel('Time')  # Set x-axis label
+    ax.set_ylabel('Speed (KB/s)')  # Set y-axis label
 
-
-
-
-
-
-
-
-
-# GUI
+# GUI setup
 root = tk.Tk()  
 root.title("Real-time Bandwidth Monitor")
 root.minsize(600, 400)
 
-# Upload label 
+# Upload speed label 
 upload_speed_label = tk.Label(root, text="Upload: 0 KB/s")
 upload_speed_label.pack()
 
-# Download label
+# Download speed label
 download_speed_label = tk.Label(root, text="Download: 0 KB/s")
 download_speed_label.pack()
 
-# Create the label for displaying ping result
+# Ping result label
 ping_label = tk.Label(root, text="Ping: -- ms")
 ping_label.pack()
 
-# Button to update the ping label
+# Initial call to update the ping label
 update_ping_label()
 
-# Create a figure and axis
+# Create a figure and axis for the plot
 fig, ax = plt.subplots(figsize=(6, 4))
 upload_speeds, download_speeds = [], []
 
@@ -122,8 +107,8 @@ canvas = FigureCanvasTkAgg(fig, master=root)
 canvas_widget = canvas.get_tk_widget()
 canvas_widget.pack(fill=tk.BOTH, expand=True)
 
-# Animate the plot
+# Animate the plot with a 1-second interval
 ani = FuncAnimation(fig, update_plot, interval=1000)
 
-# Run the GUI
+# Run the Tkinter main loop
 root.mainloop()
